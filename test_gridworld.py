@@ -23,11 +23,12 @@ def main():
     while not done:
         a = random.randrange(4)
         (s, r, done) = env.step(a)
+        
         log['t'].append(log['t'][-1] + 1)
         log['s'].append(s)
         log['a'].append(a)
         log['r'].append(r)
-
+        
     # Plot data and save to png file
     plt.plot(log['t'], log['s'])
     plt.plot(log['t'][:-1], log['a'])
