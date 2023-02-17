@@ -111,7 +111,7 @@ class PolicyIteration:
             plt.figure(dpi=200)
             plt.plot(val_history)
             plt.tight_layout()
-            plt.savefig('policy_iteration.png')
+            plt.savefig('figures/gridworld/policy_iteration.png')
             # plt.show()
 
 
@@ -153,7 +153,7 @@ class ValueIteration:
             plt.figure(dpi=200)
             plt.plot(value_hist)
             plt.tight_layout()
-            plt.savefig('value_iteration.png')
+            plt.savefig('figures/gridworld/value_iteration.png')
 
 
 
