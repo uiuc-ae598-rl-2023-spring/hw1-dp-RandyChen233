@@ -6,9 +6,6 @@ import matplotlib.pyplot as plt
 import gridworld
 from tqdm import tqdm
 
-""""Since this is a HW assignment, each method has its own separate class object for clarity purposes"""
-
-
 class PolicyIteration:
     def __init__(self, env, gamma):
         self.env = env
@@ -17,91 +14,66 @@ class PolicyIteration:
         self.max_num_steps = self.env.max_num_steps
 
         self.gamma = gamma #discount factor
+        self.theta= 1e-3
 
+    def train(self,plot=True):
+        # Initialize policy and value function
+        policy = np.zeros(self.num_states)
+        V = np.zeros(self.num_states)
         
-    def run_policy_evaluation(self, policy, V, tol=1e-3):
-  
-        done = False
-        delta = 0
-        delta_history = [delta]
         mean_V_list = []
 
-        while not done:
-            for s in range(self.num_states):
-                v = V[s]
-                a = policy[s]
-                (_, _, done) = self.env.step(a)
-                # p = self.env.p(s_new, s, a)
-               
-                #Update V[s]:
-                V[s] = np.sum([self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new]) \
-                                                for (s_new, r) in [self.env.step(policy[s])[0:2]]])
-
-                delta = max(delta, abs(v - V[s]))
-                delta_history.append(delta)
-
-            if delta < tol:
-                break
-
-            # Compute the mean value of V and append it to the list
-            mean_V = sum(V)/self.num_states
-            mean_V_list.append(mean_V)
-
-        return V, len(delta_history), mean_V_list
-
-    def run_policy_improvement(self, policy, V):
-        
-        new_policy = np.zeros(self.env.n_states, dtype=np.int)
-        for s in range(self.num_states):
+        # Outer loop: iterate over policy and value function until convergence
+        delta_history_count = []
+        while True:
             
-            v_list = np.zeros(self.num_actions)
-
-            for a in range(self.num_actions):
-                # (s_new, r, _) = self.env.step(a)
-                # p = self.env.p(s_new, s, a)
-
-                v_list[a] = np.sum([self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new]) \
-                                         for (s_new, r) in self.env.step(policy[s])[:2]])
+            # Policy evaluation: update value function using current policy
+            while True:
+                delta = 0
+                delta_count_per_eval = []
                 
-            new_policy[s] = np.argmax(v_list)
+                for s in range(self.num_states):
+                    v = V[s]
+                    V[s] = sum(self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new])\
+                                                for (s_new, r, _) in [self.env.step(policy[s])])
+                    delta = max(delta, abs(v - V[s]))
+                    delta_count_per_eval.append(delta)
+                
+                if delta < self.theta:
+                    break
 
-        return new_policy
-    
-    def train(self, tol=1e-3, max_iters=100, plot=True):
-        
-        policy = np.zeros(self.env.n_states, dtype=np.int)
-        V = np.zeros(self.env.n_states)
+                delta_history_count.append(len(delta_count_per_eval))
 
-        eval_count_history = []
+                mean_V = sum(V)/self.num_states
+                mean_V_list.append(mean_V)
 
-        epoch = 0
-        for i in range(max_iters):
-
-            # Evaluate the current policy
-            V, eval_count, mean_V_history = self.run_policy_evaluation(policy, V)
-            eval_count_history.append(eval_count)
-
-            # Improve the policy
-            new_policy = self.run_policy_improvement(policy, V)
-
-            # Check if the policy has converged
-            if np.array_equal(new_policy, policy):
+            # Policy improvement: update policy using current value function
+            policy_stable = True
+            for s in range(self.num_states):
+                old_action = policy[s]
+                policy[s] = np.argmax([sum(self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new]) \
+                                           for (s_new, r, _) in [self.env.step(a)]) for a in range(self.num_actions)])
+                if old_action != policy[s]:
+                    policy_stable = False
+            if policy_stable:
                 break
 
-            policy = new_policy
+            # Reset environment before starting new episode
+            s = self.env.reset()
 
-            epoch +=1
-
-        print(f'eval count history = {eval_count_history}')
+        print(f'Total counts of policy evaluations is {len(delta_history_count)}! \n')
+        print(f'Total counts of values stored is {len(mean_V_list)}!')
 
         if plot is True:
             plt.figure(dpi=200)
-            plt.plot(mean_V_history)
+            plt.plot(mean_V_list)
             plt.tight_layout()
+            plt.grid('on')
+            plt.title('Policy iteration')
             plt.savefig('figures/gridworld/policy_iteration.png')
-            # plt.show()
 
-        # return policy,V
+        return policy, V, delta_history_count
+
 
 class ValueIteration:
     def __init__(self, env, gamma):
@@ -113,45 +85,50 @@ class ValueIteration:
         self.gamma = gamma #discount factor
         self.values = np.zeros(self.num_states) #Initialize `values` as zeros
         self.policy = np.random.randint(0, self.num_actions, self.num_states)
+        self.theta =  1e-3
 
-    def train(self, tol=1e-3, plot = True):
-        delta = float('inf')
-        i = 0
-        value_hist = []
-        while delta > tol:
-            delta = 0
+    def train(self, plot = True):
+        delta = 0
+        value_hist_mean = []
+        # Outer loop: iterate over policy and value function until convergence
+        while True:
+        
             for s in range(self.num_states):
                 v = self.values[s]
                 v_list = np.zeros(self.num_actions)
+
                 for a in range(self.num_actions):
                     # (s_new, r, _) = self.env.step(a)
                     # p = self.env.p(s_new, s, a)
+
                     v_list[a] = np.sum([self.env.p(s_new, s, self.policy[s]) * (r + self.gamma * self.values[s_new]) \
-                                         for (s_new, r) in self.env.step(self.policy[s])[:2]])
+                                         for (s_new, r, _) in [self.env.step(self.policy[s])]])
                 self.values[s] = np.max(v_list)
                 self.policy[s] = np.argmax(v_list)
                 delta = max(delta, abs(v - self.values[s]))
                 s = self.env.reset()
-            i += 1
 
-            value_hist.append(np.mean(self.values))
-        print(f"Converged in {i} iterations")
+            if delta < self.theta:
+                    break
+            
+            value_hist_mean.append(sum(v_list)/self.num_states)
+     
 
-
-        if plot:
+        if plot is True:
             plt.figure(dpi=200)
-            plt.plot(value_hist)
+            plt.plot(value_hist_mean)
             plt.tight_layout()
             plt.savefig('figures/gridworld/value_iteration.png')
 
-        return self.policy
+        return self.policy, self.values
+    
 def main():
     env = gridworld.GridWorld(hard_version=False)
     policy_iter = PolicyIteration(env, gamma=0.95)
     policy_iter.train()   
 
-    # value_iter = ValueIteration(env, gamma = 0.95)
-    # value_iter.train()
+    value_iter = ValueIteration(env, gamma = 0.95)
+    value_iter.train()
     
 
 if __name__ == '__main__':
