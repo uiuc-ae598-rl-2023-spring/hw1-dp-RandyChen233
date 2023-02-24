@@ -17,21 +17,24 @@ class PolicyIteration:
 
     def train(self,plot=True):
         # Initialize policy and value function
-        policy = np.zeros(self.num_states)
+        policy =np.random.randint(self.num_actions, size=self.num_states)
         V = np.zeros(self.num_states)
         
         mean_V_list = []
 
+        self.env.reset()
+
         # Outer loop: iterate over policy and value function until convergence
         delta_history_count = []
         while True:
-            
             # Policy evaluation: update value function using current policy
             while True:
+
                 delta = 0
                 delta_count_per_eval = []
-                
+    
                 for s in range(self.num_states):
+                    # print(f'state is {s}')
                     v = V[s]
                     V[s] = sum(self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new])\
                                                 for (s_new, r, _) in [self.env.step(policy[s])])
@@ -57,8 +60,7 @@ class PolicyIteration:
             if policy_stable:
                 break
 
-            # Reset environment before starting new episode
-            s = self.env.reset()
+            
 
         print(f'Total counts of policy evaluations is {len(delta_history_count)}! \n')
         print(f'Total counts of values stored is {len(mean_V_list)}!')
@@ -75,8 +77,8 @@ class PolicyIteration:
     
     def plot_example_trajectories(self, num_steps):
         agent =  PolicyIteration(self.env, gamma=0.95)
-        policy, _, _ = self.train(plot=False)
-
+        policy, _, _ = agent.train(plot=False)
+        print(f'Policy is {policy}')
         fig, axs = plt.subplots(nrows=num_steps, figsize=(6, 3*num_steps))
         for i in range(num_steps):
             state = self.env.reset()
@@ -88,11 +90,12 @@ class PolicyIteration:
                 traj.append(next_state)
                 state = next_state
             traj = np.array(traj)
+            print(f'trajectory is {traj}')
             axs[i].scatter(traj[:, 0], traj[:, 1], c=np.arange(len(traj)), cmap='plasma', alpha=0.8)
-            axs[i].set_xlim([0, self.env.grid_size])
-            axs[i].set_ylim([0, self.env.grid_size])
-            axs[i].set_xticks(np.arange(0.5, self.env.grid_size, 1))
-            axs[i].set_yticks(np.arange(0.5, self.env.grid_size, 1))
+            axs[i].set_xlim([0, 5])
+            axs[i].set_ylim([0, 5])
+            axs[i].set_xticks(np.arange(0.5, 5, 1))
+            axs[i].set_yticks(np.arange(0.5, 5, 1))
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Trajectory {i+1}')
         plt.tight_layout()
@@ -182,10 +185,10 @@ class ValueIteration:
                 state = next_state
             traj = np.array(traj)
             axs[i].scatter(traj[:, 0], traj[:, 1], c=np.arange(len(traj)), cmap='plasma', alpha=0.8)
-            axs[i].set_xlim([0, self.env.grid_size])
-            axs[i].set_ylim([0, self.env.grid_size])
-            axs[i].set_xticks(np.arange(0.5, self.env.grid_size, 1))
-            axs[i].set_yticks(np.arange(0.5, self.env.grid_size, 1))
+            axs[i].set_xlim([0, 5])
+            axs[i].set_ylim([0, 5])
+            axs[i].set_xticks(np.arange(0.5, 5, 1))
+            axs[i].set_yticks(np.arange(0.5, 5, 1))
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Trajectory {i+1}')
         plt.tight_layout()
@@ -278,10 +281,10 @@ class SarsaTD0:
                 state = next_state
             traj = np.array(traj)
             axs[i].scatter(traj[:, 0], traj[:, 1], c=np.arange(len(traj)), cmap='plasma', alpha=0.8)
-            axs[i].set_xlim([0, self.env.grid_size])
-            axs[i].set_ylim([0, self.env.grid_size])
-            axs[i].set_xticks(np.arange(0.5, self.env.grid_size, 1))
-            axs[i].set_yticks(np.arange(0.5, self.env.grid_size, 1))
+            axs[i].set_xlim([0, 5])
+            axs[i].set_ylim([0, 5])
+            axs[i].set_xticks(np.arange(0.5, 5, 1))
+            axs[i].set_yticks(np.arange(0.5, 5, 1))
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Trajectory {i+1}')
         plt.tight_layout()
@@ -320,7 +323,7 @@ MAIN LOOP:
     
 def main():
     """Policy iteration"""
-    env.reset()
+    
     env = gridworld.GridWorld(hard_version=False)
     policy_iter = PolicyIteration(env, gamma=0.95)
     policy_iter.plot_example_trajectories(num_steps=100)
