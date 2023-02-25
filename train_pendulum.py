@@ -225,8 +225,6 @@ class QLearning:
         plt.tight_layout()
         plt.savefig('figures/pendulum/policy_stateValue_QLearning.png')
 
-
-
 """
 
 MAIN LOOP:
