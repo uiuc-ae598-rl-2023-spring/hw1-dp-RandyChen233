@@ -23,7 +23,7 @@ def main():
     while not done:
         a = random.randrange(4)
         (s, r, done) = env.step(a)
-        
+        print(f'state is {s}')
         log['t'].append(log['t'][-1] + 1)
         log['s'].append(s)
         log['a'].append(a)

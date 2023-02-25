@@ -65,8 +65,8 @@ class PolicyIteration:
             if policy_stable:
                 break
          
-        print(f'Total counts of policy evaluations is {len(delta_history_count)}! \n')
-        print(f'Total counts of values stored is {len(mean_V_list)}!')
+        # print(f'Total counts of policy evaluations is {len(delta_history_count)}! \n')
+        # print(f'Total counts of values stored is {len(mean_V_list)}!')
 
         if plot is True:
             plt.figure(dpi=200)
@@ -81,7 +81,6 @@ class PolicyIteration:
     def plot_example_trajectories(self, num_steps):
         agent =  PolicyIteration(self.env, gamma=0.95)
         policy, _, _ = agent.train(plot=False)
-        print(f'Policy is {policy}')
         fig, axs = plt.subplots(nrows=num_steps, figsize=(6, 3*num_steps))
         for i in range(num_steps):
             state = self.env.reset()
@@ -93,7 +92,7 @@ class PolicyIteration:
                 traj.append(next_state)
                 state = next_state
             traj = np.array(traj)
-            print(f'trajectory is {traj}')
+
             xs, ys = zip(*(state_to_xy[s] for s in traj))
             axs[i].scatter(xs, ys, s = 50, c='r')
             axs[i].set_xlim([0, 5])
@@ -183,8 +182,6 @@ class ValueIteration:
             if delta < self.theta:
                 break
     
-                
-        print(f'Total counts of values stored is {len(value_hist_mean)}!')
             
         if plot is True:
             plt.figure(dpi=200)
@@ -475,17 +472,21 @@ def main():
     """Policy iteration"""
     
     env = gridworld.GridWorld(hard_version=False)
+    env.reset()
     policy_iter = PolicyIteration(env, gamma=0.95)
     policy_iter.plot_example_trajectories(num_steps=5)
     policy_iter.plot_policy()
 
     """Value iteration"""
+    env.reset()
     value_iter = ValueIteration(env, gamma = 0.95)
+    
     value_iter.plot_example_trajectories(num_steps=5)
     value_iter.plot_policy()
     
     """SARSA"""
     # by default: alpha=0.5, gamma=0.95, epsilon=0.1
+    env.reset()
     alphas = [0.3, 0.5, 0.8]
     epsilons = [0.1, 0.3, 0.5]
     num_episodes = 100
@@ -496,6 +497,7 @@ def main():
     sarsa.plot_policy(num_episodes)
 
     """Q Learning"""
+    env.reset()
     alphas = [0.3, 0.5, 0.8]
     epsilons = [0.1, 0.3, 0.5]
     num_episodes = 100
@@ -504,8 +506,6 @@ def main():
     sarsa.plot_learning_curves(alphas, epsilons, num_episodes)
     sarsa.plot_example_trajectories(5,num_episodes)
     sarsa.plot_policy(num_episodes)
-
-
 
 
 if __name__ == '__main__':
