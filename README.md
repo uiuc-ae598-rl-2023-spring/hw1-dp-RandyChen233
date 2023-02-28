@@ -1,4 +1,4 @@
-# HW1 - Dynamic Programming\
+# HW1 - Dynamic Programming
 (This is the pull request branch)
 
 ## What to do
