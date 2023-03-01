@@ -26,7 +26,8 @@ class PolicyIteration:
     def train(self,plot=True):
        
         # Initialize the policy and value function
-        policy = np.zeros(self.num_states)
+        # policy = np.zeros(self.num_states)
+        policy = np.random.randint(self.num_actions, self.num_states)
         V = np.zeros(self.num_states)
         
         mean_V_list = []
@@ -58,7 +59,7 @@ class PolicyIteration:
             policy_stable = True
             for s in range(self.num_states):
                 old_action = policy[s]
-                policy[s] = policy[s] = np.argmax([sum([self.env.p(s1, s, a) * (self.env.r(s, a) + self.gamma * V[s1]) \
+                policy[s] = np.argmax([sum([self.env.p(s1, s, a) * (self.env.r(s, a) + self.gamma * V[s1]) \
                                             for s1 in range(self.env.num_states)]) for a in range(self.env.num_actions)])
                 if old_action != policy[s]:
                     policy_stable = False
@@ -142,7 +143,8 @@ class ValueIteration:
     def train(self, plot = True):
 
         V = np.zeros(self.num_states)
-        policy = np.zeros(self.num_states)
+        # policy = np.zeros(self.num_states)
+        policy = np.random.randint(self.num_actions, self.num_states)
 
         
         value_hist_mean = []
@@ -267,7 +269,9 @@ class SarsaTD0:
             state = self.env.reset()
             action = self.choose_action(state)
             total_return = 0
-            for step in range(self.env.max_num_steps):
+            done = False
+            # for step in range(self.env.max_num_steps):
+            while not done:
                 next_state, reward, done= self.env.step(action)
                 next_action = self.choose_action(next_state)
                 # SARSA update rule
@@ -279,7 +283,7 @@ class SarsaTD0:
                     break
             returns.append(total_return)
 
-        # Compute value function using TD(0)
+        # Compute state value function using TD(0)
         
         for state in range(self.env.num_states):
             for action in range(self.env.num_actions):
