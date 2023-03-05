@@ -12,7 +12,6 @@ state_to_xy = {
     20: (0, 4), 21: (1, 4), 22: (2, 4), 23: (3, 4), 24: (4, 4),
 }
 
-
 class PolicyIteration:
     def __init__(self, env, gamma):
         self.env = env
@@ -27,24 +26,22 @@ class PolicyIteration:
        
         # Initialize the policy and value function
         # policy = np.zeros(self.num_states)
-        policy = np.random.randint(self.num_actions, self.num_states)
+        policy = np.random.randint(self.num_actions, size=self.num_states)
         V = np.zeros(self.num_states)
-        
         mean_V_list = []
+        max_eval = 500
 
         # Outer loop
         delta_history_count = []
         while True:
             # Policy evaluation
-            while True:
+            for i in range(max_eval):
                 delta = 0
                 delta_count_per_eval = []
                 for s in range(self.num_states):
                     v = V[s]
-                    # V[s] = sum(self.env.p(s_new, s, policy[s]) * (r + self.gamma * V[s_new])\
-                    #                             for (s_new, r, _) in [self.env.step(policy[s])])
-                    V[s] =  sum([self.env.p(s1, s, policy[s]) * (self.env.r(s, policy[s]) + self.gamma * V[s1]) \
-                                                            for s1 in range(self.env.num_states)])
+                    V[s] =  sum([self.env.p(s1, s, policy[s]) * (self.env.r(s, policy[s]) + self.gamma * V[s1])\
+                                                            for s1 in range(self.num_states)])
                     delta = max(delta, abs(v - V[s]))
                     delta_count_per_eval.append(delta)
                 if delta < self.theta:
@@ -60,7 +57,7 @@ class PolicyIteration:
             for s in range(self.num_states):
                 old_action = policy[s]
                 policy[s] = np.argmax([sum([self.env.p(s1, s, a) * (self.env.r(s, a) + self.gamma * V[s1]) \
-                                            for s1 in range(self.env.num_states)]) for a in range(self.env.num_actions)])
+                                            for s1 in range(self.num_states)]) for a in range(self.num_actions)])
                 if old_action != policy[s]:
                     policy_stable = False
             if policy_stable:
@@ -81,7 +78,7 @@ class PolicyIteration:
     
     def plot_example_trajectories(self, num_steps):
         agent =  PolicyIteration(self.env, gamma=0.95)
-        policy, _, _ = agent.train(plot=False)
+        policy, _, _ = agent.train()
         fig, axs = plt.subplots(nrows=num_steps, figsize=(6, 3*num_steps))
         for i in range(num_steps):
             state = self.env.reset()
@@ -99,12 +96,12 @@ class PolicyIteration:
             axs[i].set_xlim([0, 5])
             axs[i].set_ylim([0, 5])
 
-            # for j in range(len(traj) - 1):
-            #     start = state_to_xy[traj[j]]
-            #     end = state_to_xy[traj[j+1]]
-            #     dx = end[0] - start[0]
-            #     dy = end[1] - start[1]
-            #     axs[i].arrow(start[0], start[1], dx, dy, length_includes_head=True, head_width=0.1, color='black')
+            for j in range(len(traj) - 1):
+                start = state_to_xy[traj[j]]
+                end = state_to_xy[traj[j+1]]
+                dx = end[0] - start[0]
+                dy = end[1] - start[1]
+                axs[i].arrow(start[0], start[1], dx, dy,  color='black')
 
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Policy Iter Trajectory {i+1}')
@@ -114,8 +111,9 @@ class PolicyIteration:
     
     def plot_policy(self):
         # Compute state-values and policy
+        self.env.reset()
         agent =  PolicyIteration(self.env, gamma=0.95)
-        policy, state_values, _ = agent.train(plot=False)
+        policy, state_values, _ = agent.train()
         # Plot state-value function
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
         axs[0].plot(state_values)
@@ -144,9 +142,7 @@ class ValueIteration:
 
         V = np.zeros(self.num_states)
         # policy = np.zeros(self.num_states)
-        policy = np.random.randint(self.num_actions, self.num_states)
-
-        
+        policy = np.random.randint(self.num_actions, size=self.num_states)
         value_hist_mean = []
 
         # Outer loop: iterate over policy and value function until convergence
@@ -198,7 +194,7 @@ class ValueIteration:
     
     def plot_example_trajectories(self, num_steps):
         agent =  ValueIteration(self.env, gamma=0.95)
-        policy, V = agent.train(False)
+        policy, V = agent.train()
 
         fig, axs = plt.subplots(nrows=num_steps, figsize=(6, 3*num_steps))
         for i in range(num_steps):
@@ -216,12 +212,12 @@ class ValueIteration:
             axs[i].set_xlim([0, 5])
             axs[i].set_ylim([0, 5])
 
-            # for j in range(len(traj) - 1):
-            #     start = state_to_xy[traj[j]]
-            #     end = state_to_xy[traj[j+1]]
-            #     dx = end[0] - start[0]
-            #     dy = end[1] - start[1]
-            #     axs[i].arrow(start[0], start[1], dx, dy, length_includes_head=True, head_width=0.1, color='black')
+            for j in range(len(traj) - 1):
+                start = state_to_xy[traj[j]]
+                end = state_to_xy[traj[j+1]]
+                dx = end[0] - start[0]
+                dy = end[1] - start[1]
+                axs[i].arrow(start[0], start[1], dx, dy,  color='black')
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Value Iter Trajectory {i+1}')
         plt.tight_layout()
@@ -229,6 +225,7 @@ class ValueIteration:
     
     def plot_policy(self):
         # Compute state-values and policy
+        self.env.reset()
         agent =  ValueIteration(self.env, gamma=0.95)
         policy, state_values = agent.train(False)
         # Plot state-value function
@@ -284,6 +281,10 @@ class SarsaTD0:
             returns.append(total_return)
 
         # Compute state value function using TD(0)
+        """
+        value function is the total sum of probability of choosing 
+        an action (or a policy) multiplied by the action-value (Q value) of taking each action.
+        """
         
         for state in range(self.env.num_states):
             for action in range(self.env.num_actions):
@@ -323,12 +324,12 @@ class SarsaTD0:
             axs[i].set_xlim([0, 5])
             axs[i].set_ylim([0, 5])
 
-            # for j in range(len(traj) - 1):
-            #     start = state_to_xy[traj[j]]
-            #     end = state_to_xy[traj[j+1]]
-            #     dx = end[0] - start[0]
-            #     dy = end[1] - start[1]
-            #     axs[i].arrow(start[0], start[1], dx, dy, length_includes_head=True, head_width=0.1, color='black')
+            for j in range(len(traj) - 1):
+                start = state_to_xy[traj[j]]
+                end = state_to_xy[traj[j+1]]
+                dx = end[0] - start[0]
+                dy = end[1] - start[1]
+                axs[i].arrow(start[0], start[1], dx, dy,  color='black')
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'SARSA Trajectory {i+1}')
         plt.tight_layout()
@@ -337,6 +338,7 @@ class SarsaTD0:
 
     def plot_policy(self, num_episodes):
         # Compute state-values and policy
+        self.env.reset()
         agent = SarsaTD0(self.env)
         returns, V, Q= agent.train(num_episodes)
         state_values = V
@@ -380,7 +382,9 @@ class QLearning:
         for episode in range(num_episodes):
             state = self.env.reset()
             total_return = 0
-            for step in range(self.env.max_num_steps):
+            done = False
+            # for step in range(self.env.max_num_steps):
+            while not done:
                 action = self.choose_action(state)
                 next_state, reward, done= self.env.step(action)
                 next_action = np.argmax(self.Q[next_state])
@@ -430,12 +434,12 @@ class QLearning:
             axs[i].set_xlim([0, 5])
             axs[i].set_ylim([0, 5])
 
-            # for j in range(len(traj) - 1):
-            #     start = state_to_xy[traj[j]]
-            #     end = state_to_xy[traj[j+1]]
-            #     dx = end[0] - start[0]
-            #     dy = end[1] - start[1]
-            #     axs[i].arrow(start[0], start[1], dx, dy, length_includes_head=True, head_width=0.1, color='black')
+            for j in range(len(traj) - 1):
+                start = state_to_xy[traj[j]]
+                end = state_to_xy[traj[j+1]]
+                dx = end[0] - start[0]
+                dy = end[1] - start[1]
+                axs[i].arrow(start[0], start[1], dx, dy,  color='black')
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Q-learning Trajectory {i+1}')
         plt.tight_layout()
@@ -444,6 +448,7 @@ class QLearning:
 
     def plot_policy(self, num_episodes):
         # Compute state-values and policy
+        self.env.reset()
         agent = SarsaTD0(self.env)
         returns, V, Q= agent.train(num_episodes)
         state_values = V
@@ -475,14 +480,14 @@ def main():
     env = gridworld.GridWorld(hard_version=False)
     env.reset()
     policy_iter = PolicyIteration(env, gamma=0.95)
-    policy_iter.plot_example_trajectories(num_steps=5)
+    policy_iter.plot_example_trajectories(num_steps=10)
     policy_iter.plot_policy()
 
     """Value iteration"""
     env.reset()
     value_iter = ValueIteration(env, gamma = 0.95)
     
-    value_iter.plot_example_trajectories(num_steps=5)
+    value_iter.plot_example_trajectories(num_steps=10)
     value_iter.plot_policy()
     
     """SARSA"""

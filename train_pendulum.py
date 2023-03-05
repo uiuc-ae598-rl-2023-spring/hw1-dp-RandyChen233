@@ -3,6 +3,9 @@ import numpy as np
 from discrete_pendulum import Pendulum
 import matplotlib.pyplot as plt
 
+"""Please be a little patient, the code takes a little while to run somehow"""
+
+
 class SarsaTD0:
     def __init__(self, env, alpha=0.1, gamma=0.9, epsilon=0.1):
         self.env = env
@@ -19,12 +22,11 @@ class SarsaTD0:
         max_velocity = self.env.max_thetadot
         angle = ((state // (num_velocities + 1)) * 2 * np.pi / num_angles) - np.pi
         velocity = ((state % (num_velocities + 1)) * 2 * max_velocity / num_velocities) - max_velocity
+        #pendulum has length of 1:
         x = np.sin(angle) + velocity
         y = np.cos(angle)
         
         return x, y
-
-
 
     def select_action(self, state):
         if random.uniform(0, 1) < self.epsilon:
@@ -54,13 +56,20 @@ class SarsaTD0:
                 action = next_action
             returns.append(total_return)
 
-        # Compute value function using TD(0)
+        # Compute state value function
+        """
+        value function is the total sum of probability of choosing 
+        an action (or a policy) multiplied by the action-value (Q value) of taking each action.
+        """
+
         for state in range(self.env.num_states):
             for action in range(self.env.num_actions):
                 self.V[state] += self.Q[state, action] * self.epsilon / self.env.num_actions + \
-                                (1 - self.epsilon) * self.Q[state, np.argmax(self.Q[state, :])] \
-                                * (1 - self.epsilon + self.epsilon / self.env.num_actions)
+                (1 - self.epsilon) * self.Q[state, np.argmax(self.Q[state, :])] * \
+                (1 - self.epsilon + self.epsilon / self.env.num_actions)
+        
         return returns, self.V, self.Q
+    
     def plot_learning_curves(self, alphas, epsilons, num_episodes):
         fig, axs = plt.subplots(nrows=len(alphas), ncols=len(epsilons), figsize=(15, 10))
         for i, alpha in enumerate(alphas):
@@ -94,7 +103,7 @@ class SarsaTD0:
             axs[i].grid(color='k', linestyle='-', linewidth=1)
             axs[i].set_title(f'Sarsa Trajectory {i+1}')
         plt.tight_layout()
-        plt.savefig('figures/pendulum/example_trajectory_QLearning.png')
+        plt.savefig('figures/pendulum/example_trajectory_SARSA.png')
 
 
     def plot_policy(self, num_episodes):
@@ -234,7 +243,8 @@ MAIN LOOP:
         
 def main():
   
-    env = Pendulum(n_theta=15, n_thetadot=21)
+    # env = Pendulum(n_theta=21, n_thetadot=21)
+    env = Pendulum()
     
     
     """SARSA"""
@@ -242,23 +252,23 @@ def main():
     env.reset()
     alphas = [0.3, 0.5, 0.8]
     epsilons = [0.1, 0.3, 0.5]
-    num_episodes = 50
+    num_episodes = 100
     sarsa = SarsaTD0(env)
     #Learning curves with various alphas and epsilons
     sarsa.plot_learning_curves(alphas, epsilons, num_episodes)
-    sarsa.plot_example_trajectories(5,num_episodes)
+    sarsa.plot_example_trajectories(6,num_episodes)
     sarsa.plot_policy(num_episodes)
 
     """Q Learning"""
     env.reset()
     alphas = [0.3, 0.5, 0.8]
     epsilons = [0.1, 0.3, 0.5]
-    num_episodes = 50
-    sarsa = QLearning(env)
+    num_episodes = 100
+    Q_agent = QLearning(env)
     #Learning curves with various alphas and epsilons
-    sarsa.plot_learning_curves(alphas, epsilons, num_episodes)
-    sarsa.plot_example_trajectories(5,num_episodes)
-    sarsa.plot_policy(num_episodes)
+    Q_agent.plot_learning_curves(alphas, epsilons, num_episodes)
+    Q_agent.plot_example_trajectories(6,num_episodes)
+    Q_agent.plot_policy(num_episodes)
 
 
 if __name__ == '__main__':
